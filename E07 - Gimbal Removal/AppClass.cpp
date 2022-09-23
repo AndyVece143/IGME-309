@@ -37,6 +37,21 @@ void Application::Display(void)
 	m_m4Model = glm::rotate(IDENTITY_M4, glm::radians(m_v3Rotation.x), vector3(1.0f, 0.0f, 0.0f));
 	m_m4Model = glm::rotate(m_m4Model, glm::radians(m_v3Rotation.y), vector3(0.0f, 1.0f, 0.0f));
 	m_m4Model = glm::rotate(m_m4Model, glm::radians(m_v3Rotation.z), vector3(0.0f, 0.0f, 1.0f));
+
+
+
+
+
+
+
+	m_m4Model = glm::toMat4(newOrientation);
+
+	/*
+	vector3 vRotInRad = glm::radians(m_v3Rotation);
+	quaternion qOrientation(vRotInRad);
+	m_m4Model = ToMatrix4(qOrientation);
+	*/
+
 	/*
 	* The following line was replaced by the model manager so we can see a model instead of a cone
 	*/
