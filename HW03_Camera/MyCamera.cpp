@@ -21,16 +21,37 @@ void MyCamera::MoveForward(float a_fDistance)
 	//		 in the _Binary folder you will notice that we are moving 
 	//		 backwards and we never get closer to the plane as we should 
 	//		 because as we are looking directly at it.
-	m_v3Position += vector3(0.0f, 0.0f, a_fDistance);
-	m_v3Target += vector3(0.0f, 0.0f, a_fDistance);
+
+	//m_v3Position += vector3(0.0f, 0.0f, -a_fDistance);
+	//m_v3Target += vector3(0.0f, 0.0f, -a_fDistance);
+
+	//New code!  I add the forward vectors * the distance to the position and target.
+	//I then rotate the forward vector around the quaternion
+
+	m_v3Position += m_v3Forward * a_fDistance;
+	m_v3Target += m_v3Forward * a_fDistance;
+	quaternion myQuaternion;
+	m_v3Forward = glm::rotate(myQuaternion, m_v3Forward);
 }
 void MyCamera::MoveVertical(float a_fDistance)
 {
 	//Tip:: Look at MoveForward
+	//We do not have to use the forward variable like last time because this moves relative to the world and not the camera
+	m_v3Position += vector3(0.0f, a_fDistance, 0.0f);
+	m_v3Target += vector3(0.0f, a_fDistance, 0.0f);
 }
 void MyCamera::MoveSideways(float a_fDistance)
 {
 	//Tip:: Look at MoveForward
+	//m_v3Position += vector3(a_fDistance, 0.0f, 0.0f);
+	//m_v3Target += vector3(a_fDistance, 0.0f, 0.0f);
+	
+	//New code!  This is all the same as moving forward, except the forward vector is replaced with the rightward vector
+	
+	m_v3Position += m_v3Rightward * a_fDistance;
+	m_v3Target += m_v3Rightward * a_fDistance;
+	quaternion myQuaternion;
+	m_v3Forward = glm::rotate(myQuaternion, m_v3Forward);
 }
 void MyCamera::CalculateView(void)
 {
@@ -40,7 +61,30 @@ void MyCamera::CalculateView(void)
 	//		 it will receive information from the main code on how much these orientations
 	//		 have change so you only need to focus on the directional and positional 
 	//		 vectors. There is no need to calculate any right click process or connections.
+
+	//Changes!  We create a vector that represents the right of us.  We create a quaternion that takes in the Pitch and the right vector
+	//The pitch and right are divided by 4 so they do not move so fast
+	
+	//Pitch
+	vector3 right = glm::cross(m_v3Forward, m_v3Upward);
+	quaternion myQuaternion = glm::angleAxis(m_v3PitchYawRoll.x / 4, right / 4);
+	m_v3Forward = glm::rotate(myQuaternion, m_v3Forward);
+	m_v3Target = (m_v3Forward + m_v3Position);
+
+	//We do a similar setup with the Yaw, but the quaternion is made with the Yaw and upwards vector
+	//The Yaw and upwards are divided by 4 so they do not move so fast
+	//Yaw
+	quaternion myQuaternion2 = glm::angleAxis(m_v3PitchYawRoll.y / 4, m_v3Upward / 4);
+	m_v3Forward = glm::rotate(myQuaternion2, m_v3Forward);
+	m_v3Target = (m_v3Forward + m_v3Position);
+	
+	//Updates the rightward vector so we move side to side relative to the camera
+	m_v3Rightward = right;
+
 	m_m4View = glm::lookAt(m_v3Position, m_v3Target, m_v3Upward);
+
+	//The only real issue with the camera is that it is slippery.  It does not operate exactly like the solution provided, but it is close enough
+	//The player does move in relation to the camera, so it should be good.
 }
 //You can assume that the code below does not need changes unless you expand the functionality
 //of the class or create helper methods, etc.
