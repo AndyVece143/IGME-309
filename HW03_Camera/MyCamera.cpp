@@ -22,16 +22,10 @@ void MyCamera::MoveForward(float a_fDistance)
 	//		 backwards and we never get closer to the plane as we should 
 	//		 because as we are looking directly at it.
 
-	//m_v3Position += vector3(0.0f, 0.0f, -a_fDistance);
-	//m_v3Target += vector3(0.0f, 0.0f, -a_fDistance);
-
 	//New code!  I add the forward vectors * the distance to the position and target.
-	//I then rotate the forward vector around the quaternion
 
 	m_v3Position += m_v3Forward * a_fDistance;
 	m_v3Target += m_v3Forward * a_fDistance;
-	quaternion myQuaternion;
-	m_v3Forward = glm::rotate(myQuaternion, m_v3Forward);
 }
 void MyCamera::MoveVertical(float a_fDistance)
 {
@@ -43,15 +37,11 @@ void MyCamera::MoveVertical(float a_fDistance)
 void MyCamera::MoveSideways(float a_fDistance)
 {
 	//Tip:: Look at MoveForward
-	//m_v3Position += vector3(a_fDistance, 0.0f, 0.0f);
-	//m_v3Target += vector3(a_fDistance, 0.0f, 0.0f);
 	
 	//New code!  This is all the same as moving forward, except the forward vector is replaced with the rightward vector
 	
 	m_v3Position += m_v3Rightward * a_fDistance;
 	m_v3Target += m_v3Rightward * a_fDistance;
-	quaternion myQuaternion;
-	m_v3Forward = glm::rotate(myQuaternion, m_v3Forward);
 }
 void MyCamera::CalculateView(void)
 {
@@ -67,14 +57,14 @@ void MyCamera::CalculateView(void)
 	
 	//Pitch
 	vector3 right = glm::cross(m_v3Forward, m_v3Upward);
-	quaternion myQuaternion = glm::angleAxis(m_v3PitchYawRoll.x / 4, right / 4);
+	quaternion myQuaternion = glm::angleAxis(m_v3PitchYawRoll.x, right);
 	m_v3Forward = glm::rotate(myQuaternion, m_v3Forward);
 	m_v3Target = (m_v3Forward + m_v3Position);
 
 	//We do a similar setup with the Yaw, but the quaternion is made with the Yaw and upwards vector
 	//The Yaw and upwards are divided by 4 so they do not move so fast
 	//Yaw
-	quaternion myQuaternion2 = glm::angleAxis(m_v3PitchYawRoll.y / 4, m_v3Upward / 4);
+	quaternion myQuaternion2 = glm::angleAxis(m_v3PitchYawRoll.y, m_v3Upward);
 	m_v3Forward = glm::rotate(myQuaternion2, m_v3Forward);
 	m_v3Target = (m_v3Forward + m_v3Position);
 	
@@ -83,8 +73,8 @@ void MyCamera::CalculateView(void)
 
 	m_m4View = glm::lookAt(m_v3Position, m_v3Target, m_v3Upward);
 
-	//The only real issue with the camera is that it is slippery.  It does not operate exactly like the solution provided, but it is close enough
-	//The player does move in relation to the camera, so it should be good.
+	//Reset the pitch and yaw so the camera stops when you aren't clicking anything
+	m_v3PitchYawRoll = vector3(0, 0, 0);
 }
 //You can assume that the code below does not need changes unless you expand the functionality
 //of the class or create helper methods, etc.
