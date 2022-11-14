@@ -6,37 +6,75 @@ uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 	//TODO: Calculate the SAT algorithm I STRONGLY suggest you use the
 	//Real Time Collision detection algorithm for OBB here but feel free to
 	//implement your own solution.
-	return BTXs::eSATResults::SAT_NONE;
+
+	//Here we are getting the cross product normals of the edges using the v3Corners
+	std::vector<vector3> normals;
+	normals.push_back(glm::normalize(glm::cross(v3Corner[2] - v3Corner[0], v3Corner[4] - v3Corner[0])));
+	normals.push_back(glm::normalize(glm::cross(v3Corner[2] - v3Corner[0], v3Corner[1] - v3Corner[0])));
+	normals.push_back(glm::normalize(glm::cross(v3Corner[4] - v3Corner[0], v3Corner[1] - v3Corner[0])));
+	normals.push_back(glm::normalize(glm::cross(v3Corner[4] - v3Corner[0], v3Corner[2] - v3Corner[0])));
+	normals.push_back(glm::normalize(glm::cross(v3Corner[1] - v3Corner[0], v3Corner[2] - v3Corner[0])));
+	normals.push_back(glm::normalize(glm::cross(v3Corner[1] - v3Corner[0], v3Corner[4] - v3Corner[0])));
+
+	normals.push_back(glm::normalize(glm::cross(a_pOther->v3Corner[2] - a_pOther->v3Corner[0], a_pOther->v3Corner[4] - a_pOther->v3Corner[0])));
+	normals.push_back(glm::normalize(glm::cross(a_pOther->v3Corner[2] - a_pOther->v3Corner[0], a_pOther->v3Corner[1] - a_pOther->v3Corner[0])));
+	normals.push_back(glm::normalize(glm::cross(a_pOther->v3Corner[4] - a_pOther->v3Corner[0], a_pOther->v3Corner[1] - a_pOther->v3Corner[0])));
+	normals.push_back(glm::normalize(glm::cross(a_pOther->v3Corner[4] - a_pOther->v3Corner[0], a_pOther->v3Corner[2] - a_pOther->v3Corner[0])));
+	normals.push_back(glm::normalize(glm::cross(a_pOther->v3Corner[1] - a_pOther->v3Corner[0], a_pOther->v3Corner[2] - a_pOther->v3Corner[0])));
+	normals.push_back(glm::normalize(glm::cross(a_pOther->v3Corner[1] - a_pOther->v3Corner[0], a_pOther->v3Corner[4] - a_pOther->v3Corner[0])));
+
+	//Here we are getting the min and max corner values along the projection axes and comparing them for overlaps
+	for (vector3 n : normals) {
+		float maxA = -1000;
+		float minA = 1000;
+		for (uint i = 0; i < 8; i++) {
+			float proj = glm::dot(n, v3Corner[i]);
+			if (proj > maxA) maxA = proj;
+			if (proj < minA) minA = proj;
+		}
+		float maxB = -1000;
+		float minB = 1000;
+		for (uint i = 0; i < 8; i++) {
+			float proj = glm::dot(n, a_pOther->v3Corner[i]);
+			if (proj > maxB) maxB = proj;
+			if (proj < minB) minB = proj;
+		}
+		if (maxB - minA > (maxA - minA) + (maxB - minB)) return 1;
+	}
+
+	//there is no axis test that separates this two objects
+	return 0;
 }
 bool MyRigidBody::IsColliding(MyRigidBody* const a_pOther)
 {
 	//check if spheres are colliding
-	bool bColliding = true;
+	bool bColliding = (glm::distance(GetCenterGlobal(), a_pOther->GetCenterGlobal()) < m_fRadius + a_pOther->m_fRadius);
 	/*
 	* We use Bounding Spheres or ARBB as a pre-test to avoid expensive calculations (SAT)
 	* we default bColliding to true here to always fall in the need of calculating
 	* SAT for the sake of the assignment.
 	*/
-	if (bColliding) //they are colliding with bounding sphere
+	//if they are colliding check the SAT
+	
+	//This code is extra collision that is more specific
+	if (bColliding)
 	{
-		uint nResult = SAT(a_pOther);
-
-		if (bColliding) //The SAT shown they are colliding
-		{
-			this->AddCollisionWith(a_pOther);
-			a_pOther->AddCollisionWith(this);
-		}
-		else //they are not colliding
-		{
-			this->RemoveCollisionWith(a_pOther);
-			a_pOther->RemoveCollisionWith(this);
-		}
+		if (SAT(a_pOther) != BTXs::eSATResults::SAT_NONE)
+			bColliding = false;// reset to false
 	}
-	else //they are not colliding with bounding sphere
+	
+
+	if (bColliding) //they are colliding
+	{
+		this->AddCollisionWith(a_pOther);
+		a_pOther->AddCollisionWith(this);
+	}
+	else //they are not colliding
 	{
 		this->RemoveCollisionWith(a_pOther);
 		a_pOther->RemoveCollisionWith(this);
 	}
+
 	return bColliding;
 }
 void MyRigidBody::Init(void)
@@ -124,7 +162,7 @@ void MyRigidBody::SetModelMatrix(matrix4 a_m4ModelMatrix)
 	m_m4ToWorld = a_m4ModelMatrix;
 
 	//Calculate the 8 corners of the cube
-	vector3 v3Corner[8];
+	v3Corner = new vector3[8]();
 	//Back square
 	v3Corner[0] = m_v3MinL;
 	v3Corner[1] = vector3(m_v3MaxL.x, m_v3MinL.y, m_v3MinL.z);

@@ -1,7 +1,7 @@
 /*----------------------------------------------
-Programmer: Alberto Bobadilla (labigm@rit.edu)
-Date: 2021/02
-Update: 2021/02
+Programmer: Andy Vece (ajv2073@rit.edu)
+Date: 2022/11
+Update: 2022/11
 ----------------------------------------------*/
 #ifndef __MYRIGIDBODY_H_
 #define __MYRIGIDBODY_H_
@@ -39,6 +39,9 @@ class MyRigidBody
 	matrix4 m_m4ToWorld = IDENTITY_M4; //Matrix that will take us from local to world coordinate
 
 	std::set<MyRigidBody*> m_CollidingRBSet; //set of rigid bodies this one is colliding with
+
+	//I initiaize v3Corner here so I can have access to it in other functions outside of SetModelMatrix
+	vector3* v3Corner;
 
 public:
 	/*
